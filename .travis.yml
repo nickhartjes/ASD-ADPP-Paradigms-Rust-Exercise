@@ -1,7 +1,6 @@
 language: rust
 rust:
-  - 1.0.0
-  - 1.1.0
+  - 1.39.0
 
 before_cache:
   - rm -rf "$TRAVIS_HOME/.cargo/registry/src"
@@ -9,5 +8,6 @@ before_cache:
 cache: cargo
 
 script:
-  - cargo build --verbose --all
-  - cargo test --verbose --all
+  - cargo build --verbose
+  - cargo test --verbose
+  - cargo run
