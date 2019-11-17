@@ -90,7 +90,6 @@ fn empty_input_empty_output() {
 }
 
 #[test]
-#[ignore]
 fn singleton_input_singleton_output() {
     let input = &[(1, 1)];
     assert_correct(input);
