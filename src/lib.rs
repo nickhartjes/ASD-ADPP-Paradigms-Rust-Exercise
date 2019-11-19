@@ -15,8 +15,9 @@ pub fn chain(input: &[(u8, u8)]) -> Option<Vec<(u8, u8)>> {
 
     print_matrix(create_matrix(input));
 
+
     for domino in input {
-        search_longest_chain(domino, create_matrix(input));
+        search_chain(domino, create_matrix(input), 0);
     }
 
     return return_value;
@@ -50,15 +51,29 @@ pub fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
     return matrix;
 }
 
-
-pub fn search_longest_chain(domino: &(u8, u8), matrix: Vec<Vec<u8>>) -> u16 {
+pub fn search_chain(domino: &(u8, u8), matrix: Vec<Vec<u8>>, length: u16) {
     let mut tmp_matrix = update_matrix(domino, matrix, REMOVE);
+    let mut new_length = length.clone() + 1;
 
-    check_matching_side(domino, tmp_matrix);
+    let mut result: Vec<(u8, u8)> = Vec::new();
 
-    println!("-- {:?}", domino);
+    let row_number = domino.0 as u8;
+    let column_number = domino.1 as u8;
 
-    return 0;
+    // Search both sides of the domino
+    for x in [domino.0, domino.1].iter() {
+        result.append(search_in_row(*x, tmp_matrix.clone()).as_mut());
+        result.append(search_in_column(*x, tmp_matrix.clone()).as_mut());
+    }
+
+    // Recursive call to the nodes found
+    for x in result.iter() {
+        let row = x.0;
+        let column = x.1;
+        search_chain(&(row, column), tmp_matrix.clone(), new_length);
+    }
+
+    println!("-- Result {} {:?}", new_length, result);
 }
 
 fn update_matrix(domino: &(u8, u8), matrix: Vec<Vec<u8>>, action: MatrixActions) -> Vec<Vec<u8>> {
@@ -67,45 +82,39 @@ fn update_matrix(domino: &(u8, u8), matrix: Vec<Vec<u8>>, action: MatrixActions)
     let column_location = domino.1 as usize;
     match action {
         ADD => tmp_matrix[row_location][column_location] = 1,
-        REMOVE => tmp_matrix[row_location][column_location] = 0
+        REMOVE => tmp_matrix[row_location][column_location] = 0,
     };
     return tmp_matrix;
 }
 
-fn check_matching_side(domino: &(u8, u8), matrix: Vec<Vec<u8>>) -> &[(u8, u8)] {
-    let mut found: &[(u8, u8)] = &[];
-    let row_number = domino.0 as usize;
-    let column_number = domino.1 as usize;
-
-    let mut iterator = matrix.into_iter();
-    let mut counter = 0;
-    loop {
-        match iterator.next() {
-            Some(number) => {
-                if number[column_number] == 1 {
-                    println!("*** {}", number[column_number]);
-                    println!("*** {}", counter);
-                }
-                counter = counter + 1;
-            },
-            None => break,
+fn search_in_column(column_number: u8, matrix: Vec<Vec<u8>>) -> Vec<(u8, u8)> {
+    let mut result: Vec<(u8, u8)> = Vec::new();
+    let mut row_counter: u8 = 0;
+    for row in matrix.iter() {
+        match row[column_number as usize] {
+            1 => {
+                let domino = (row_counter as u8, column_number);
+                result.push(domino);
+            }
+            _ => ()
         }
+        row_counter = row_counter + 1;
     }
+    return result;
+}
 
-//    for value in matrix[0].into_iter() {
-//        match value {
-//            num @ 0 => println!("Lower Range: {}", num),
-//            num @ 1 => println!("Upper Range: {}", num),
-//            _ => println!("Not in range."),
-//        }
-//    }
-
-//    let mut iterator = matrix.into_iter();
-//    loop {
-//        match iterator.next() {
-//            Some(number) => print!("{}", number),
-//            None => break,
-//        }
-//    }
-    return found;
+fn search_in_row(row_number: u8, matrix: Vec<Vec<u8>>) -> Vec<(u8, u8)> {
+    let mut result: Vec<(u8, u8)> = Vec::new();
+    let mut column_counter: u8 = 0;
+    for value in matrix[row_number as usize].iter() {
+        match value {
+            1 => {
+                let domino = (row_number, column_counter as u8);
+                result.push(domino);
+            }
+            _ => ()
+        }
+        column_counter = column_counter + 1;
+    }
+    return result;
 }
