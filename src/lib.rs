@@ -6,21 +6,20 @@ enum MatrixActions {
 }
 
 pub fn chain(input: &[(u8, u8)]) -> Option<Vec<(u8, u8)>> {
-    let return_value: Option<Vec<(u8, u8)>> = Some(vec![]);
 
     // If the input is empty, return directly.
     if input.len() <= 0 {
-        return return_value;
+        return Some(vec![]);
     }
 
     print_matrix(create_matrix(input));
 
+    let chain = search_chain(input[0], input.len(), create_matrix(input), Vec::new());
+    println!("{:?}", chain);
 
-    for domino in input {
-        search_chain(domino, create_matrix(input), 0);
-    }
+//    return Option::from(chain);
 
-    return return_value;
+    return chain;
 }
 
 pub fn print_matrix(matrix: Vec<Vec<u8>>) {
@@ -46,37 +45,65 @@ pub fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
 
     // Loop the slice input, that contains tuples of u8
     for domino in input {
-        matrix = update_matrix(domino, matrix, ADD);
+        matrix = update_matrix(*domino, matrix, ADD);
     }
     return matrix;
 }
 
-pub fn search_chain(domino: &(u8, u8), matrix: Vec<Vec<u8>>, length: u16) {
+pub fn search_chain(domino: (u8, u8), dominoes_chain_length: usize, matrix: Vec<Vec<u8>>, mut path: Vec<(u8, u8)>) -> Option<Vec<(u8, u8)>> {
     let mut tmp_matrix = update_matrix(domino, matrix, REMOVE);
-    let mut new_length = length.clone() + 1;
+
+//    let mut new_length = length.clone() + 1;
 
     let mut result: Vec<(u8, u8)> = Vec::new();
+//    let mut new_path = path.clone();
 
-    let row_number = domino.0 as u8;
-    let column_number = domino.1 as u8;
 
-    // Search both sides of the domino
-    for x in [domino.0, domino.1].iter() {
-        result.append(search_in_row(*x, tmp_matrix.clone()).as_mut());
-        result.append(search_in_column(*x, tmp_matrix.clone()).as_mut());
+    let mut first = 0;
+    let mut last = u8::max_value();
+    if path.len() > 0 {
+        first = path[0].0;
+        last = path[path.len() - 1].1
     }
 
-    // Recursive call to the nodes found
-    for x in result.iter() {
-        let row = x.0;
-        let column = x.1;
-        search_chain(&(row, column), tmp_matrix.clone(), new_length);
+    if last == domino.0 || path.len() == 0 {
+        path.push(domino);
+        first = path[0].0;
+        last = path[path.len() - 1].1
+    } else {
+        // insert reverse domino
+        path.push((domino.1, domino.0));
+        last = domino.0;
     }
 
-    println!("-- Result {} {:?}", new_length, result);
+    // Check correct path
+    if path.len() == dominoes_chain_length && first == last {
+        println!("YESZ");
+        println!(" {:?} ", first);
+        println!(" {:?} ", last);
+        return Some(path);
+    } else {
+        let row_number = domino.0 as u8;
+        let column_number = domino.1 as u8;
+
+        // Search both sides of the domino
+        for x in [domino.1].iter() {
+            result.append(search_in_row(*x, tmp_matrix.clone()).as_mut());
+            result.append(search_in_column(*x, tmp_matrix.clone()).as_mut());
+        }
+
+        // Recursive call to the nodes found
+        for x in result.iter() {
+            let row = x.0;
+            let column = x.1;
+            return search_chain((row, column), dominoes_chain_length, tmp_matrix.clone(), path.clone());
+        }
+        return None;
+    }
+
 }
 
-fn update_matrix(domino: &(u8, u8), matrix: Vec<Vec<u8>>, action: MatrixActions) -> Vec<Vec<u8>> {
+fn update_matrix(domino: (u8, u8), matrix: Vec<Vec<u8>>, action: MatrixActions) -> Vec<Vec<u8>> {
     let mut tmp_matrix = matrix.clone();
     let row_location = domino.0 as usize;
     let column_location = domino.1 as usize;
