@@ -6,20 +6,23 @@ enum MatrixActions {
 }
 
 pub fn chain(input: &[(u8, u8)]) -> Option<Vec<(u8, u8)>> {
-
     // If the input is empty, return directly.
     if input.len() <= 0 {
         return Some(vec![]);
     }
 
+    // Just a visualisation step, can be removed for performance
     print_matrix(create_matrix(input));
 
-    let chain = search_chain(input[0], input.len(), create_matrix(input), Vec::new());
-    println!("{:?}", chain);
-
-//    return Option::from(chain);
-
-    return chain;
+    // Start the search from all the dominoes
+    for domino in input {
+        let chain = search_chain(*domino, input.len(), create_matrix(input), Vec::new());
+        match chain {
+            Some(chain) => return Some(chain),
+            _ => (),
+        }
+    }
+    return None;
 }
 
 pub fn print_matrix(matrix: Vec<Vec<u8>>) {
@@ -41,6 +44,7 @@ pub fn print_matrix(matrix: Vec<Vec<u8>>) {
 }
 
 pub fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
+    // Creates a 2d Vector matrix from given domino slices
     let mut matrix: Vec<Vec<u8>> = vec![vec![0; 7]; 7];
 
     // Loop the slice input, that contains tuples of u8
@@ -50,14 +54,16 @@ pub fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
     return matrix;
 }
 
-pub fn search_chain(domino: (u8, u8), dominoes_chain_length: usize, matrix: Vec<Vec<u8>>, mut path: Vec<(u8, u8)>) -> Option<Vec<(u8, u8)>> {
-    let mut tmp_matrix = update_matrix(domino, matrix, REMOVE);
+pub fn search_chain(
+    domino: (u8, u8),
+    dominoes_chain_length: usize,
+    matrix: Vec<Vec<u8>>,
+    mut path: Vec<(u8, u8)>,
+) -> Option<Vec<(u8, u8)>> {
 
-//    let mut new_length = length.clone() + 1;
-
+    // Remove the current domino from the matrix
+    let tmp_matrix = update_matrix(domino, matrix, REMOVE);
     let mut result: Vec<(u8, u8)> = Vec::new();
-//    let mut new_path = path.clone();
-
 
     let mut first = 0;
     let mut last = u8::max_value();
@@ -78,29 +84,26 @@ pub fn search_chain(domino: (u8, u8), dominoes_chain_length: usize, matrix: Vec<
 
     // Check correct path
     if path.len() == dominoes_chain_length && first == last {
-        println!("YESZ");
-        println!(" {:?} ", first);
-        println!(" {:?} ", last);
+        println!("Found path:  {:?} ", path);
         return Some(path);
     } else {
-        let row_number = domino.0 as u8;
-        let column_number = domino.1 as u8;
-
         // Search both sides of the domino
-        for x in [domino.1].iter() {
-            result.append(search_in_row(*x, tmp_matrix.clone()).as_mut());
-            result.append(search_in_column(*x, tmp_matrix.clone()).as_mut());
-        }
+        result.append(search_in_row(domino.1, tmp_matrix.clone()).as_mut());
+        result.append(search_in_column(domino.1, tmp_matrix.clone()).as_mut());
 
         // Recursive call to the nodes found
         for x in result.iter() {
             let row = x.0;
             let column = x.1;
-            return search_chain((row, column), dominoes_chain_length, tmp_matrix.clone(), path.clone());
+            return search_chain(
+                (row, column),
+                dominoes_chain_length,
+                tmp_matrix.clone(),
+                path.clone(),
+            );
         }
         return None;
     }
-
 }
 
 fn update_matrix(domino: (u8, u8), matrix: Vec<Vec<u8>>, action: MatrixActions) -> Vec<Vec<u8>> {
@@ -123,7 +126,7 @@ fn search_in_column(column_number: u8, matrix: Vec<Vec<u8>>) -> Vec<(u8, u8)> {
                 let domino = (row_counter as u8, column_number);
                 result.push(domino);
             }
-            _ => ()
+            _ => (),
         }
         row_counter = row_counter + 1;
     }
@@ -139,7 +142,7 @@ fn search_in_row(row_number: u8, matrix: Vec<Vec<u8>>) -> Vec<(u8, u8)> {
                 let domino = (row_number, column_counter as u8);
                 result.push(domino);
             }
-            _ => ()
+            _ => (),
         }
         column_counter = column_counter + 1;
     }

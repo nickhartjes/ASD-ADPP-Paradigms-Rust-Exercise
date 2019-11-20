@@ -145,7 +145,6 @@ fn need_backtrack() {
 }
 
 #[test]
-#[ignore]
 fn separate_loops() {
     let input = &[(1, 2), (2, 3), (3, 1), (1, 1), (2, 2), (3, 3)];
     assert_correct(input);
