@@ -14,7 +14,7 @@ pub fn chain(input: &[(u8, u8)]) -> Option<Vec<(u8, u8)>> {
     // Just a visualisation step, can be removed for performance
     print_matrix(create_matrix(input));
 
-    // Start the search from all the dominoes
+    // Start a search from all the dominoes, and stop if the first full path  is found
     for domino in input {
         let chain = search_chain(*domino, input.len(), create_matrix(input), Vec::new());
         if let Some(chain) = chain {
@@ -24,11 +24,19 @@ pub fn chain(input: &[(u8, u8)]) -> Option<Vec<(u8, u8)>> {
     None
 }
 
-pub fn print_matrix(matrix: Vec<Vec<u8>>) {
-    // Prints the given matrix in a 2d form
+fn print_matrix(matrix: Vec<Vec<u8>>) {
+    // Prints the given matrix in a 2d shape
     // Columns an row numbers are shown
-    let mut row_count: u8 = 0;
-    for row in matrix {
+    // Example:
+    //   0  1  2  3  4  5  6
+    //0 [0, 0, 0, 0, 0, 0, 0]
+    //1 [0, 0, 1, 0, 0, 0, 0]
+    //2 [0, 0, 0, 1, 0, 0, 0]
+    //3 [0, 1, 0, 0, 0, 0, 0]
+    //4 [0, 0, 0, 0, 0, 0, 0]
+    //5 [0, 0, 0, 0, 0, 0, 0]
+    //6 [0, 0, 0, 0, 0, 0, 0]
+    for (row_count, row) in matrix.iter().enumerate() {
         if row_count == 0 {
             print!("  ");
             for x in 0..row.len() {
@@ -38,13 +46,13 @@ pub fn print_matrix(matrix: Vec<Vec<u8>>) {
         }
         print!("{} ", row_count);
         println!("{:?}", row);
-        row_count += 1;
     }
 }
 
-pub fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
+fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
     // Creates a 2d Vector matrix from given domino slices
-    let mut matrix: Vec<Vec<u8>> = vec![vec![0; 7]; 7];
+    let matrix_size: usize = 7;
+    let mut matrix: Vec<Vec<u8>> = vec![vec![0; matrix_size]; matrix_size];
 
     // Loop the slice input, that contains tuples of u8
     for domino in input {
@@ -53,7 +61,7 @@ pub fn create_matrix(input: &[(u8, u8)]) -> Vec<Vec<u8>> {
     matrix
 }
 
-pub fn search_chain(
+fn search_chain(
     domino: (u8, u8),
     dominoes_chain_length: usize,
     matrix: Vec<Vec<u8>>,
@@ -61,8 +69,10 @@ pub fn search_chain(
 ) -> Option<Vec<(u8, u8)>> {
     // Remove the current domino from the matrix
     let tmp_matrix = update_matrix(domino, matrix, REMOVE);
+    // Create the result path
     let mut result: Vec<(u8, u8)> = Vec::new();
 
+    // To match
     let mut first = 0;
     let mut last = u8::max_value();
     if !path.is_empty() {
@@ -119,15 +129,11 @@ fn update_matrix(domino: (u8, u8), matrix: Vec<Vec<u8>>, action: MatrixActions) 
 
 fn search_in_column(column_number: u8, matrix: Vec<Vec<u8>>) -> Vec<(u8, u8)> {
     let mut result: Vec<(u8, u8)> = Vec::new();
-
-    //    let mut row_counter: u8 = 0;
-    //    for row in matrix.iter() {
     for (row_counter, row) in matrix.iter().enumerate() {
         if let 1 = row[column_number as usize] {
             let domino = (row_counter as u8, column_number);
             result.push(domino);
         }
-        //        row_counter += 1;
     }
     result
 }
